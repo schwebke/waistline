@@ -6,6 +6,7 @@ plugins/
 .gradle
 .idea
 .jshintrc
+cordova-plugin-crop/
 tasks
 test
 package-lock.json

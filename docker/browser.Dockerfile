@@ -1,7 +1,7 @@
 FROM alpine:3
 
 # Install dependencies
-RUN apk add --no-cache --update nodejs npm
+RUN apk add --no-cache --update nodejs npm git
 RUN npm install -g cordova
 
 # Because some commands ask if we want to opt in

@@ -7,7 +7,7 @@ ENV PATH $PATH:$GRADLE_HOME/bin
 
 # Install dependencies
 WORKDIR /opt
-RUN apk add --no-cache --update curl ca-certificates unzip nodejs npm
+RUN apk add --no-cache --update curl ca-certificates unzip nodejs npm git
 RUN curl -L https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip \
     -o gradle-$GRADLE_VERSION-bin.zip && \
     unzip gradle-$GRADLE_VERSION-bin.zip && \
