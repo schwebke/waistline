@@ -320,8 +320,11 @@ app.Stats = {
         if (app.measurements.includes(field)) {
           value = app.Utils.convertUnit(data.stats[i][field], app.measurementUnits[field], unit);
         } else {
-          let nutrition = await app.FoodsMealsRecipes.getTotalNutrition(data.items[i], "ignore");
+          let nutrition = await app.FoodsMealsRecipes.getTotalNutrition(data.items[i], "disclose");
           value = nutrition[field];
+          if (field === "calories" && !!nutrition["burned-calories"]) {
+            value -= nutrition["burned-calories"];
+          }
         }
 
         let timestamp = data.timestamps[i];
