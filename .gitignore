@@ -7,6 +7,7 @@ plugins/
 .idea
 .jshintrc
 cordova-plugin-crop/
+www/assets/js/waistline_export.json
 tasks
 test
 package-lock.json

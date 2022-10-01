@@ -343,7 +343,14 @@ app.Settings = {
   },
 
   importDatabase: async function() {
-    let file = await chooser.getFile();
+    let file = undefined;
+    if (device.platform !== "browser") {
+       file = await chooser.getFile();
+    } else {
+       file = { };
+       let response = await fetch("./assets/js/waistline_export.json");
+       file.data = await response.arrayBuffer();
+    }
 
     if (file !== undefined && file.data !== undefined) {
       let data;
@@ -524,7 +531,14 @@ app.Settings = {
       return;
     }
 
-    let file = await chooser.getFile();
+    let file = undefined;
+    if (device.platform !== "browser") {
+       file = await chooser.getFile();
+    } else {
+       file = { };
+       let response = await fetch("./assets/js/waistline_export.json");
+       file.data = await response.arrayBuffer();
+    }
 
     if (file !== undefined && file.data !== undefined) {
       let data;
