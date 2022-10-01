@@ -24,6 +24,7 @@ app.Stats = {
   chartType: "bar",
   dbData: undefined,
   data: {},
+  MILLIS_PER_WEEK: 1000*3600*24*7,
 
   init: async function() {
     this.getComponents();
@@ -200,6 +201,9 @@ app.Stats = {
       app.Stats.renderChart(app.Stats.data);
     } else {
       app.Stats.chart.data.labels = app.Stats.data.dates;
+      if (app.Stats.chart.data.datasets.length > 1) {
+        app.Stats.chart.data.datasets.splice(1);
+      }
       app.Stats.chart.data.datasets[0].label = app.Stats.data.dataset.label;
       app.Stats.chart.data.datasets[0].data = app.Stats.data.dataset.values;
     }
@@ -229,6 +233,28 @@ app.Stats = {
         borderColor: 'green',
         borderWidth: 3
       });
+    }
+
+    if (app.Settings.get("statistics", "trend-line") == true) {
+      let regression = app.Stats.data.regression;
+      if (regression.p.length > 1) {
+        let trendline = {
+          label: 'Trend',
+          type: 'line',
+          borderColor: 'red',
+          borderDash: [10, 10],
+          fill: true,
+          pointStyle: 'dash',
+          spanGaps: true,
+          data: []
+        };
+        trendline.data.push(regression.yStart);
+        for (let i = 0; i < app.Stats.data.dates.length-2; ++i) {
+           trendline.data.push(null);
+        }
+        trendline.data.push(regression.yEnd);
+        app.Stats.chart.data.datasets.push(trendline);
+      }
     }
 
     app.Stats.chart.update();
@@ -268,6 +294,9 @@ app.Stats = {
 
     let avg = this.renderAverage(this.data.average, this.data.dataset.unit);
     this.el.timeline.prepend(avg);
+
+    let trend = this.renderTrend(this.data.regression.beta, this.data.regression.yEnd, this.data.dataset.unit);
+    this.el.timeline.prepend(trend);
   },
 
   renderAverage: function(average, unit) {
@@ -296,6 +325,35 @@ app.Stats = {
     return li;
   },
 
+  renderTrend: function(trend, projection, unit) {
+    let roundedTrend = Math.round(trend * 100) / 100;
+    let roundedProjection = Math.round(projection * 100) / 100;
+
+    let li = document.createElement("li");
+
+    let content = document.createElement("div");
+    content.className = "item-content";
+    li.appendChild(content);
+
+    let inner = document.createElement("div");
+    inner.className = "item-inner";
+    content.appendChild(inner);
+
+    let title = document.createElement("div");
+    title.className = "item-title";
+    title.innerText = app.strings.statistics["trend"] || "Trend";
+    inner.appendChild(title);
+
+    let after = document.createElement("div");
+    after.className = "item-after";
+    after.innerText = app.Utils.tidyNumber(roundedTrend, unit + " " + "per week") +
+      " / " +
+      app.Utils.tidyNumber(roundedProjection, unit);
+    inner.appendChild(after);
+
+    return li;
+  },
+
   organiseData: function(data, field) {
     return new Promise(async function(resolve, reject) {
 
@@ -308,7 +366,15 @@ app.Stats = {
           values: [],
           unit: unitSymbol
         },
-        average: 0
+        average: 0,
+        regression: {
+          p: [],
+          avgX: 0,
+          avgY: 0,
+          beta: 0,
+          yStart: 0,
+          yEnd: 0
+        }
       };
 
       let valueCount = 0;
@@ -353,6 +419,10 @@ app.Stats = {
           result.dataset.values.push(Math.round(value * 100) / 100);
           result.average = result.average + value;
           ++valueCount;
+
+          result.regression.p.push({
+            x: timestamp.getTime()/app.Stats.MILLIS_PER_WEEK,
+            y: value});
         } else {
           result.dataset.values.push(null);
         }
@@ -372,6 +442,28 @@ app.Stats = {
       if (valuesStartIndex > 0 || valuesEndIndex < result.dataset.values.length-1) {
         result.dataset.values = result.dataset.values.slice(valuesStartIndex, valuesEndIndex+1);
         result.dates = result.dates.slice(valuesStartIndex, valuesEndIndex+1);
+      }
+
+      // regression (trend analysis)
+      if (result.regression.p.length > 1) {
+        result.regression.p.forEach((p) => {
+            result.regression.avgX += p.x;
+            result.regression.avgY += p.y;
+          });
+        result.regression.avgX /= result.regression.p.length;
+        result.regression.avgY /= result.regression.p.length;
+
+        let xy = 0, xx = 0;
+        result.regression.p.forEach((p) => {
+            xy += (p.x - result.regression.avgX) * (p.y - result.regression.avgY);
+            xx += (p.x - result.regression.avgX) * (p.x - result.regression.avgX);
+          });
+        result.regression.beta = xy/xx;
+
+        let pStart = result.regression.p[0];
+        let pEnd = result.regression.p[result.regression.p.length-1];
+        result.regression.yStart = result.regression.avgY - 0.5 * result.regression.beta * (pEnd.x - pStart.x);
+        result.regression.yEnd = result.regression.avgY + 0.5 * result.regression.beta * (pEnd.x - pStart.x);
       }
 
       let title = app.strings.nutriments[field] || app.strings.statistics[field] || field;
