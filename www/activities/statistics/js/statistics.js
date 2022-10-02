@@ -36,7 +36,7 @@ app.Stats = {
 
     this.setChartTypeButtonVisibility();
     this.chart = undefined;
-    this.dbData = await this.getDataFromDb(new Date(), app.Stats.el.range.value);
+    this.dbData = await this.getDataFromDb(this.getFromDate(), app.Stats.el.range.value);
 
     if (this.dbData !== undefined) {
       let laststat = window.localStorage.getItem("last-stat");
@@ -53,6 +53,10 @@ app.Stats = {
     }
   },
 
+  getFromDate: function() {
+    return app.Diary.date ?? new Date();
+  },
+
   getComponents: function() {
     app.Stats.el.range = document.querySelector(".page[data-name='statistics'] #range");
     app.Stats.el.stat = document.querySelector(".page[data-name='statistics'] #stat");
@@ -67,7 +71,7 @@ app.Stats = {
     // Date range
     if (!app.Stats.el.range.hasChangedEvent) {
       app.Stats.el.range.addEventListener("change", async (e) => {
-        app.Stats.dbData = await this.getDataFromDb(new Date(), app.Stats.el.range.value);
+        app.Stats.dbData = await this.getDataFromDb(this.getFromDate(), app.Stats.el.range.value);
         if (app.Stats.dbData !== undefined) {
           app.Stats.data = await app.Stats.organiseData(app.Stats.dbData, app.Stats.el.stat.value);
           app.Stats.updateChart();
@@ -494,10 +498,17 @@ app.Stats = {
       let toDate = new Date(fromDate);
       toDate.setUTCHours(toDate.getUTCHours() + 24);
 
-      if (range !== undefined)
-        range == 7 ? fromDate.setUTCDate(fromDate.getUTCDate() - 6) : fromDate.setUTCMonth(fromDate.getUTCMonth() - range);
-      else
+      if (range !== undefined) {
+        if (range == 7) {
+           fromDate.setUTCDate(fromDate.getUTCDate() - 6);
+        } else if (range == 14) {
+           fromDate.setUTCDate(fromDate.getUTCDate() - 13);
+        } else {
+           fromDate.setUTCMonth(fromDate.getUTCMonth() - range);
+        }
+      } else {
         fromDate = new Date(0); // No range specified, so use earliest possible date
+      }
 
       dbHandler.getIndex("dateTime", "diary").openCursor(IDBKeyRange.bound(fromDate, toDate, false, true)).onsuccess = function(e) {
         let cursor = e.target.result;
