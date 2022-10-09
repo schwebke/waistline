@@ -42,6 +42,15 @@ app.Utils = {
     return text;
   },
 
+  dateToLocaleDateString: function(date) {
+    return date.toLocaleDateString([], {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      timeZone: "UTC"
+    });
+  },
+
   escapeHtml: function(text) {
     let div = document.createElement("div");
     div.appendChild(document.createTextNode(text));
@@ -516,15 +525,6 @@ app.Utils = {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result);
       reader.readAsDataURL(blob);
-    });
-  },
-
-  dateToLocaleDateString: function(date) {
-    return date.toLocaleDateString([], {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      timeZone: "UTC"
     });
   }
 };

@@ -265,14 +265,13 @@ app.Stats = {
   },
 
   renderStatLog: function() {
-    this.el.timeline.innerHTML = "";
+    app.Stats.el.timeline.innerHTML = "";
 
     // Build list from bottom to top
     for (let i = 0; i < app.Stats.data.dates.length; i++) {
-      // do not render data gaps in log list
-      if (!app.Stats.data.dataset.values[i]) {
-        continue;
-      }
+
+      // Do not render data gaps in list
+      if (!app.Stats.data.dataset.values[i]) continue;
 
       let li = document.createElement("li");
       app.Stats.el.timeline.prepend(li);
@@ -296,11 +295,11 @@ app.Stats = {
       inner.appendChild(after);
     }
 
-    let avg = this.renderAverage(this.data.average, this.data.dataset.unit);
-    this.el.timeline.prepend(avg);
+    let avg = app.Stats.renderAverage(app.Stats.data.average, app.Stats.data.dataset.unit);
+    app.Stats.el.timeline.prepend(avg);
 
-    let trend = this.renderTrend(this.data.regression.beta, this.data.regression.yEnd, this.data.dataset.unit);
-    this.el.timeline.prepend(trend);
+    let trend = app.Stats.renderTrend(app.Stats.data.regression.beta, app.Stats.data.regression.yEnd, app.Stats.data.dataset.unit);
+    app.Stats.el.timeline.prepend(trend);
   },
 
   renderAverage: function(average, unit) {
@@ -397,55 +396,36 @@ app.Stats = {
           }
         }
 
-        let timestamp = data.timestamps[i];
-        let date = app.Utils.dateToLocaleDateString(timestamp);
+        if (value != undefined && value != 0 && !isNaN(value)) {
+          let timestamp = data.timestamps[i];
+          let date = app.Utils.dateToLocaleDateString(timestamp);
 
-        // check for skipped days between previous and current date, include them in chart data
-        if (previousTimestamp) {
-          let missingTimestamp = new Date();
-          missingTimestamp.setTime(previousTimestamp.getTime());
-          while (true) {
-            missingTimestamp.setDate(missingTimestamp.getDate() + 1);
-            let missingDate = app.Utils.dateToLocaleDateString(missingTimestamp);
-            if ((missingDate === date) || (missingTimestamp.getTime() > timestamp.getTime())) {
-              break;
-            } else {
+          // Fill data gaps between previous and current date with empty data
+          if (previousTimestamp) {
+            let missingTimestamp = new Date();
+            missingTimestamp.setTime(previousTimestamp.getTime());
+
+            while (true) {
+              missingTimestamp.setDate(missingTimestamp.getDate() + 1);
+              if (missingTimestamp.getTime() >= timestamp.getTime()) break;
+
+              let missingDate = app.Utils.dateToLocaleDateString(missingTimestamp);
               result.dates.push(missingDate);
               result.dataset.values.push(null);
             }
           }
-        }
 
-        result.dates.push(date);
-        previousTimestamp = timestamp;
-
-        if (value != undefined && value != 0 && !isNaN(value)) {
+          result.dates.push(date);
           result.dataset.values.push(Math.round(value * 100) / 100);
           result.average = result.average + value;
-          ++valueCount;
+
+          valueCount++;
+          previousTimestamp = timestamp;
 
           result.regression.p.push({
             x: timestamp.getTime()/app.Stats.MILLIS_PER_WEEK,
             y: value});
-        } else {
-          result.dataset.values.push(null);
         }
-      }
-
-      // trim trailing and leading gaps
-      let valuesStartIndex = -1;
-      let valuesEndIndex = -1;
-      result.dataset.values.forEach((el, idx) => {
-        if (el) {
-          if (valuesStartIndex < 0) {
-            valuesStartIndex = idx;
-          }
-          valuesEndIndex = idx;
-        }
-      });
-      if (valuesStartIndex > 0 || valuesEndIndex < result.dataset.values.length-1) {
-        result.dataset.values = result.dataset.values.slice(valuesStartIndex, valuesEndIndex+1);
-        result.dates = result.dates.slice(valuesStartIndex, valuesEndIndex+1);
       }
 
       // regression (trend analysis)
@@ -544,7 +524,8 @@ app.Stats = {
           borderWidth: 2,
           backgroundColor: 'rgba(54, 162, 235, 0.5)',
           borderColor: 'rgba(54, 162, 235, 0.5)',
-          spanGaps: true
+          spanGaps: true,
+          lineTension: 0.2
         }]
       },
       options: {
