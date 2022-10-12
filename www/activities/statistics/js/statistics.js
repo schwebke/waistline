@@ -483,6 +483,8 @@ app.Stats = {
            fromDate.setUTCDate(fromDate.getUTCDate() - 6);
         } else if (range == 14) {
            fromDate.setUTCDate(fromDate.getUTCDate() - 13);
+        } else if (range == 21) {
+           fromDate.setUTCDate(fromDate.getUTCDate() - 20);
         } else {
            fromDate.setUTCMonth(fromDate.getUTCMonth() - range);
         }
