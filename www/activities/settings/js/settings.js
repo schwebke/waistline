@@ -601,7 +601,8 @@ app.Settings = {
         "y-zero": false,
         "average-line": true,
         "goal-line": true,
-        "trend-line": true
+        "trend-line": true,
+        "net-calories": true
       },
       diary: {
         "meal-names": ["Breakfast", "Lunch", "Dinner", "Snacks", "", "", ""],

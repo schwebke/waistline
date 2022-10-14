@@ -382,6 +382,7 @@ app.Stats = {
 
       let valueCount = 0;
       let previousTimestamp = null;
+      const netCalories = app.Settings.get("statistics", "net-calories");
 
       for (let i = 0; i < data.timestamps.length; i++) {
         let value;
@@ -391,7 +392,7 @@ app.Stats = {
         } else {
           let nutrition = await app.FoodsMealsRecipes.getTotalNutrition(data.items[i], "disclose");
           value = nutrition[field];
-          if (field === "calories" && !!nutrition["burned-calories"]) {
+          if (netCalories && field === "calories" && !!nutrition["burned-calories"]) {
             value -= nutrition["burned-calories"];
           }
         }
