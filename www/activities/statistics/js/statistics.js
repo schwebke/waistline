@@ -491,13 +491,15 @@ app.Stats = {
       toDate.setUTCHours(toDate.getUTCHours() + 24);
 
       if (range !== undefined) {
-        if (range == 7) {
+        if (range == 5) { // current week
+           fromDate.setUTCDate(fromDate.getUTCDate() - fromDate.getUTCDay());
+        } else if (range == 7) { // 1 week
            fromDate.setUTCDate(fromDate.getUTCDate() - 6);
-        } else if (range == 14) {
+        } else if (range == 14) { // 2 weeks
            fromDate.setUTCDate(fromDate.getUTCDate() - 13);
-        } else if (range == 21) {
+        } else if (range == 21) { // 3 weeks
            fromDate.setUTCDate(fromDate.getUTCDate() - 20);
-        } else {
+        } else { // # months
            fromDate.setUTCMonth(fromDate.getUTCMonth() - range);
         }
       } else {
